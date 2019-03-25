@@ -1,2 +1,4 @@
-# ourpixels-node
-ITP 405 Final Project - Node
+# OurPixels - Node Repo
+## ITP 405 Final Project
+- Name: Changyu Zhu
+- Email: changyuz@usc.edu
