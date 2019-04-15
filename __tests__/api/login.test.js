@@ -15,7 +15,7 @@ it('login without username and password should return a 422', () => {
 it('login without username should return a 422', () => {
 	return frisby
 	.post(url + '/login/', {
-		username: 'root'
+		username: 'test'
 	})
 	.expect('status', 422)
 	.expect('json', {
@@ -37,7 +37,7 @@ it('login without username should return a 422', () => {
 it('login with wrong credentials should return a 400', () => {
 	return frisby
 	.post(url + '/login/', {
-		username: 'root',
+		username: 'test',
 		password: 'root'
 	})
 	.expect('status', 400)
@@ -49,12 +49,12 @@ it('login with wrong credentials should return a 400', () => {
 it('should return a 200 when successfully login', () => {
 	return frisby
 	.post(url + '/login/', {
-		username: 'root',
-		password: '24C30216B298744CCC2BA61AB433B71143D2838D4D8ED8BCCDBE606CC76EE8E5'
+		username: 'test',
+		password: 'password'
 	})
 	.expect('status', 200)
 	.expect('json', {
-		username: 'root',
+		username: 'test',
 		success: true,
 	})
 	.expect('jsonTypes', 'token', Joi.string().required());

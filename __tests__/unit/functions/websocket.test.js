@@ -6,9 +6,7 @@ const frisby = require('frisby');
 const url = 'ws://localhost:8081';
 const frisbyurl = 'http://localhost:8080';
 
-let clientList = [];
 let token = '';
-let process = 0;
 
 function modHandler(client, obj) {
 	if (!client.data)
@@ -56,7 +54,6 @@ function establishConnection(login) {
 			}
 		});
 		client.on('open', () => {
-			clientList.push(client);
 			if (login) {
 				client.communicate({
 					username: 'root',
@@ -75,17 +72,6 @@ function establishConnection(login) {
 	});
 }
 
-function stateChange(target) {
-	return new Promise((resolve, reject) => {
-		let id = setInterval(() => {
-			if (process == target) {
-				clearInterval(id);
-				resolve();
-			}
-		}, 10);
-	});
-}
-
 describe('websocket', () => {
 
 	beforeAll((done) => {
@@ -97,13 +83,6 @@ describe('websocket', () => {
 			token = response.json.token;
 			done();
 		});
-	})
-
-	afterEach(() => {
-		for (let i = 0; i < clientList.length; i++) {
-			clientList[i].close();
-		}
-		clientList = [];
 	})
 
 	describe('login', () => {
@@ -118,6 +97,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Missing argument(s).'
 			});
+			client.close();
 			done();
 		});
 		it('should refuse connection if token is wrong', async (done) => {
@@ -132,6 +112,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Invalid token.'
 			});
+			client.close();
 			done();
 		});
 		it('should refuse connection if image does not exist', async (done) => {
@@ -146,6 +127,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Image not found.'
 			});
+			client.close();
 			done();
 		});
 		it('should refuse connection if unauthorized', async (done) => {
@@ -160,6 +142,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Unauthorized attempt to access image.'
 			});
+			client.close();
 			done();
 		});
 		it('should succeed if everything is good', async (done) => {
@@ -186,6 +169,7 @@ describe('websocket', () => {
 					}
 				}
 			}
+			client.close();
 			done();
 		});
 	})
@@ -202,6 +186,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Invalid modification.'
 			});
+			client.close();
 			done();
 		});
 		it('should fail if x/y is out of bound', async (done) => {
@@ -216,6 +201,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Invalid modification.'
 			});
+			client.close();
 			done();
 		});
 		it('should fail if color is invalid', async (done) => {
@@ -230,6 +216,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'Invalid modification.'
 			});
+			client.close();
 			done();
 		});
 		it('should succeed if operation is valid', async () => {
@@ -257,6 +244,7 @@ describe('websocket', () => {
 				let timer = setInterval(() => {
 					if (success) {
 						clearInterval(timer);
+						client.close();
 						resolve();
 					}
 				}, 10);
@@ -283,6 +271,7 @@ describe('websocket', () => {
 				let timer = setInterval(() => {
 					if (client.lastSave != prev) {
 						clearInterval(timer);
+						client.close();
 						resolve();
 					}
 				}, 10);
@@ -353,7 +342,7 @@ describe('websocket', () => {
 				let n = parseInt(Math.random() * clientCount);
 				await randomSave(clients, clients[n]);
 			}
-			process = 1;
+			clients.forEach(client => client.close());
 			done();
 		}, 3000)
 
@@ -375,6 +364,7 @@ describe('websocket', () => {
 				}
 				await randomModification(clients, clients[n], x, y, color);
 			}
+			clients.forEach(client => client.close());
 			done();
 		}, 3000)
 
@@ -401,6 +391,7 @@ describe('websocket', () => {
 					});
 				}
 			}
+			clients.forEach(client => client.close());
 			done();
 		}, 5000)
 
@@ -444,6 +435,7 @@ describe('websocket', () => {
 					});
 				}
 			}
+			clients.forEach(client => client.close());
 			done();
 		}, 10000)
 	})

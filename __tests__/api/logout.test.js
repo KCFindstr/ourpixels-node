@@ -15,7 +15,7 @@ it('logout without username and token should return a 422', () => {
 it('logout without token should return a 422', () => {
 	return frisby
 	.post(url + '/logout/', {
-		username: 'root'
+		username: 'test'
 	})
 	.expect('status', 422)
 	.expect('json', {
@@ -37,7 +37,7 @@ it('logout without username should return a 422', () => {
 it('logout with wrong token should return a 422', () => {
 	return frisby
 	.post(url + '/logout/', {
-		username: 'root',
+		username: 'test',
 		token: 'root'
 	})
 	.expect('status', 422)
@@ -49,18 +49,18 @@ it('logout with wrong token should return a 422', () => {
 it('should return a 200 when successfully logout', () => {
 	return frisby
 	.post(url + '/login/', {
-		username: 'root',
-		password: '24C30216B298744CCC2BA61AB433B71143D2838D4D8ED8BCCDBE606CC76EE8E5'
+		username: 'test',
+		password: 'password'
 	})
 	.then((response) => {
 		let token = response.json.token;
 		return frisby.post(url + '/logout', {
-			username: 'root',
+			username: 'test',
 			token: token
 		})
 		.expect('status', 200)
 		.expect('json', {
-			username: 'root',
+			username: 'test',
 			success: true
 		});
 	});
