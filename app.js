@@ -197,19 +197,19 @@ let roomList = {};
 
 function wssLogin(ws, obj) {
 	if (ws.room || !obj.imageid || !obj.username || !obj.token) {
-		ws.send(JSON.stringify({
+		wsSend(ws, {
 			type: 'error',
 			message: ws.room ? 'Invalid attempt to reconnect.' : 'Missing argument(s).'
-		}));
+		});
 		return;
 	}
 	Image.findByPk(obj.imageid)
 	.then((image) => {
 		if (!image) {
-			ws.send(JSON.stringify({
+			wsSend(ws, {
 				type: 'error',
 				message: 'Image not found.'
-			}));
+			});
 		}
 		authenticate(obj.username, obj.token)
 		.then((user) => {
@@ -220,10 +220,10 @@ function wssLogin(ws, obj) {
 				}
 			}).then((record) => {
 				if (!record) {
-					ws.send(JSON.stringify({
+					wsSend(ws, {
 						type: 'error',
 						message: 'Unauthorized attempt to access image.'
-					}));
+					});
 					return;
 				}
 				if (!roomList[image.id]) {
@@ -236,78 +236,92 @@ function wssLogin(ws, obj) {
 				let room = roomList[image.id];
 				ws.room = room;
 				ws.username = obj.username;
+				ws.userid = user.id;
 				room.users.push(ws);
-				ws.send(JSON.stringify({
+				wsSend(ws, {
 					type: 'success',
-					data: room.data
-				}));
+					data: room.data,
+					size: image.size
+				});
 			});
 		}, () => {
-			ws.send(JSON.stringify({
+			wsSend(ws, {
 				type: 'error',
 				message: 'Invalid token.'
-			}));
+			});
 		});
 	}, () => {
-		ws.send(JSON.stringify({
+		wsSend(ws, {
 			type: 'error',
 			message: 'Image not found.'
-		}));
+		});
 	});
 }
 
 function roomBroadcast(room, message) {
 	room.users.forEach((user) => {
-		user.send(message);
+		wsSend(user, message);
 	});
 }
 
 function wssSave(ws) {
 	let room = ws.room;
 	if (!room) {
+		wsSend(ws, {
+			type: 'error',
+			message: 'No room found.'
+		});
 		return;
 	}
 	room.image.data = Decoder.encode(room.data);
 	room.image.save()
 	.then(() => {
-		roomBroadcast(room, JSON.stringify({type: 'save'}));
+		wsSend(ws, {type: 'success'});
+		roomBroadcast(room, {type: 'save'});
 	});
+}
+
+function wsSend(ws, obj) {
+	if (ws.readyState == ws.OPEN) {
+		ws.send(JSON.stringify(obj));
+	}
 }
 
 function wssMod(ws, obj) {
 	let room = ws.room;
 	if (!room) {
-		return;
+		return false;
 	}
 	let image = room.image;
 	obj.x = parseInt(obj.x);
 	obj.y = parseInt(obj.y);
 	if (isNaN(obj.x) || isNaN(obj.y)) {
-		return;
+		return false;
 	}
-	if (typeof(obj.x) != 'number' || typeof(obj.y) != 'number' || typeof(obj.color) != 'ob ject') {
-		return;
+	if (typeof(obj.x) != 'number' || typeof(obj.y) != 'number' || typeof(obj.color) != 'object') {
+		return false;
 	}
 	if (!obj.color.length || obj.color.length != 3) {
-		return;
+		return false;
 	}
 	if (obj.x < 0 || obj.x >= image.size || obj.y < 0 || obj.y >= image.size) {
-		return;
+		return false;
 	}
 	let dest = [];
 	for (let i=0; i<3; i++) {
-		dest[i] = parseInt(color[i]);
+		dest[i] = parseInt(obj.color[i]);
 		if (isNaN(dest[i]) || dest[i] < 0 || dest[i] > 255) {
-			return;
+			return false;
 		}
 	}
 	room.data[obj.x][obj.y] = dest;
-	roomBroadcast(room, JSON.stringify({
+	roomBroadcast(room, {
 		type: 'mod',
 		x: obj.x,
 		y: obj.y,
-		color: obj.color
-	}));
+		color: dest
+	});
+	return true;
 }
 
 wss.on('connection', (ws) => {
@@ -331,7 +345,16 @@ wss.on('connection', (ws) => {
 			return;
 		}
 		if (obj.type == 'mod') {
-			wssMod(ws, obj);
+			if (wssMod(ws, obj)) {
+				wsSend(ws, {
+					type: 'success'
+				});
+			} else {
+				wsSend(ws, {
+					type: 'error',
+					message: 'Invalid modification.'
+				});
+			}
 			return;
 		}
 	});
@@ -346,19 +369,21 @@ wss.on('connection', (ws) => {
 	});
 });
 
-
 // heartbeat packet
 setInterval(() => {
 	for (let key in roomList) {
 		let obj = [];
 		let room = roomList[key];
 		room.users.forEach((user) => {
-			obj.push(user.username);
+			obj.push({
+				id: user.userid,
+				username: user.username
+			});
 		});
-		roomBroadcast(room, JSON.stringify({
+		roomBroadcast(room, {
 			type: 'users',
 			users: obj
-		}));
+		});
 	}
 }, 1000);
 
