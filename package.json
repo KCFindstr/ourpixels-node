@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"test": "git checkout database.sqlite; forever start app.js; ./node_modules/jest/bin/jest.js; forever stop app.js; git checkout database.sqlite;",
+		"test": "git checkout database.sqlite; forever start app.js; ./node_modules/jest/bin/jest.js --detectOpenHandles; forever stop app.js; git checkout database.sqlite;",
 		"start": "node app.js"
 	},
 	"dependencies": {
