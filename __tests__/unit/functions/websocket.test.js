@@ -219,7 +219,7 @@ describe('websocket', () => {
 			client.close();
 			done();
 		});
-		it('should succeed if operation is valid', async () => {
+		it('should succeed if operation is valid', async (done) => {
 			let client = await establishConnection(2);
 			let success = false;
 			client.register('mod', (client, data) => {
@@ -240,7 +240,7 @@ describe('websocket', () => {
 			expect(result).to.deep.equal({
 				type: 'success'
 			});
-			return new Promise((resolve, reject) => {
+			await new Promise((resolve, reject) => {
 				let timer = setInterval(() => {
 					if (success) {
 						clearInterval(timer);
@@ -249,6 +249,7 @@ describe('websocket', () => {
 					}
 				}, 10);
 			});
+			done();
 		});
 	})
 
@@ -262,12 +263,12 @@ describe('websocket', () => {
 			});
 			done();
 		});
-		it('should succeed if entered room', async () => {
+		it('should succeed if entered room', async (done) => {
 			let client = await establishConnection(2);
 			let prev = client.lastSave;
 			let result = await client.communicate({ type: 'save' });
 			expect(result).to.deep.equal({ type: 'success' });
-			return new Promise((resolve, reject) => {
+			await new Promise((resolve, reject) => {
 				let timer = setInterval(() => {
 					if (client.lastSave != prev) {
 						clearInterval(timer);
@@ -276,6 +277,7 @@ describe('websocket', () => {
 					}
 				}, 10);
 			});
+			done();
 		});
 	})
 
@@ -437,6 +439,6 @@ describe('websocket', () => {
 			}
 			clients.forEach(client => client.close());
 			done();
-		}, 10000)
+		}, 20000)
 	})
 });
