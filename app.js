@@ -59,7 +59,9 @@ app.get('/user/:id', (req, res) => {
 	})
 	.then((user) => {
 		if (!user) {
-			res.status(404).send();
+			res.status(404).json({
+				errors: ['No such user.']
+			});
 			return;
 		}
 		let filteredResult = filterUser(user);
@@ -77,7 +79,8 @@ function filterImage(image, getData = false) {
 		creator: image.creator,
 		created: image.createdAt,
 		modified: image.updatedAt,
-		name: image.name
+		name: image.name,
+		size: image.size
 	};
 	if (getData) {
 		ret.data = Decoder.decode(image.data, image.size);
@@ -102,7 +105,9 @@ app.get('/image/:id', (req, res) => {
 	Image.findByPk(id)
 	.then((image) => {
 		if (!image) {
-			res.status(404).send();
+			res.status(404).json({
+				errors: ['No such image.']
+			});
 			return;
 		}
 		let filteredResult = filterImage(image, true);
@@ -187,11 +192,15 @@ app.post('/logout', (req, res) => {
 });
 
 // websocket
-let wss = new WebSocket.Server({port: process.env.PORT || 8080 });
+let wss = new WebSocket.Server({port: process.env.PORT || 8081 });
 let roomList = {};
 
 function wssLogin(ws, obj) {
 	if (ws.room || !obj.imageid || !obj.username || !obj.token) {
+		ws.send(JSON.stringify({
+			type: 'error',
+			message: 'Missing argument(s).'
+		}));
 		return;
 	}
 	let image = null;
@@ -200,6 +209,10 @@ function wssLogin(ws, obj) {
 		image = result;
 	});
 	if (!image) {
+		ws.send(JSON.stringify({
+			type: 'error',
+			message: 'Image not found.'
+		}));
 		return;
 	}
 	authenticate(obj.username, obj.token)
@@ -211,6 +224,10 @@ function wssLogin(ws, obj) {
 			}
 		}).then((record) => {
 			if (!record) {
+				ws.send(JSON.stringify({
+					type: 'error',
+					message: 'Unauthorized attempt to access image.'
+				}));
 				return;
 			}
 			if (!roomList[image.id]) {
@@ -339,4 +356,4 @@ setInterval(() => {
 }, 1000);
 
 // start app
-app.listen(process.env.PORT || 8000);
+app.listen(process.env.PORT || 8080);
