@@ -199,53 +199,60 @@ function wssLogin(ws, obj) {
 	if (ws.room || !obj.imageid || !obj.username || !obj.token) {
 		ws.send(JSON.stringify({
 			type: 'error',
-			message: 'Missing argument(s).'
+			message: ws.room ? 'Invalid attempt to reconnect.' : 'Missing argument(s).'
 		}));
 		return;
 	}
-	let image = null;
 	Image.findByPk(obj.imageid)
-	.then((result) => {
-		image = result;
-	});
-	if (!image) {
+	.then((image) => {
+		if (!image) {
+			ws.send(JSON.stringify({
+				type: 'error',
+				message: 'Image not found.'
+			}));
+		}
+		authenticate(obj.username, obj.token)
+		.then((user) => {
+			Access.findOne({
+				where: {
+					user: user.id,
+					image: image.id
+				}
+			}).then((record) => {
+				if (!record) {
+					ws.send(JSON.stringify({
+						type: 'error',
+						message: 'Unauthorized attempt to access image.'
+					}));
+					return;
+				}
+				if (!roomList[image.id]) {
+					roomList[image.id] = {
+						users: [],
+						image: image,
+						data: Decoder.decode(image.data, image.size)
+					};
+				}
+				let room = roomList[image.id];
+				ws.room = room;
+				ws.username = obj.username;
+				room.users.push(ws);
+				ws.send(JSON.stringify({
+					type: 'success',
+					data: room.data
+				}));
+			});
+		}, () => {
+			ws.send(JSON.stringify({
+				type: 'error',
+				message: 'Invalid token.'
+			}));
+		});
+	}, () => {
 		ws.send(JSON.stringify({
 			type: 'error',
 			message: 'Image not found.'
 		}));
-		return;
-	}
-	authenticate(obj.username, obj.token)
-	.then((user) => {
-		Access.findOne({
-			where: {
-				user: user.id,
-				image: image.id
-			}
-		}).then((record) => {
-			if (!record) {
-				ws.send(JSON.stringify({
-					type: 'error',
-					message: 'Unauthorized attempt to access image.'
-				}));
-				return;
-			}
-			if (!roomList[image.id]) {
-				roomList[image.id] = {
-					users: [],
-					image: image,
-					data: Decoder.decode(image.data, image.size)
-				};
-			}
-			let room = roomList[image.id];
-			ws.room = room;
-			ws.username = obj.username;
-			room.users.push(ws);
-			ws.send(JSON.stringify({
-				type: 'success',
-				data: room.data
-			}));
-		});
 	});
 }
 

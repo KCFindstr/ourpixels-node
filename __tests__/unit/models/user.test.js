@@ -1,5 +1,5 @@
 const User = require('../../../models/user');
-const { expect } = require('chai');
+const { expect, assert } = require('chai');
 
 function getUserStruct() {
 	return {
@@ -18,17 +18,27 @@ describe('user', () => {
 		it('should pass if everything is good', async () => {
 			let temp = getUserStruct();
 			let user = new User(temp);
-			await user.validate();
+			assert(await user.validate());
 		});
 	});
 
 	describe('id', () => {
+		it('should fail if not presented', async () => {
+			try {
+				let temp = getUserStruct();
+				temp.id = undefined;
+				let user = new User(temp);
+				assert(!await user.validate());
+			} catch (error) {
+				expect(error.errors[0].message).to.equal('Id is required.');
+			}
+		});
 		it('should fail if not numeric', async () => {
 			try {
 				let temp = getUserStruct();
 				temp.id = 'test';
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Id must be numeric.');
 			}
@@ -41,19 +51,9 @@ describe('user', () => {
 				let temp = getUserStruct();
 				temp.username = undefined;
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Username is required.');
-			}
-		});
-		it('should fail if not string', async () => {
-			try {
-				let temp = getUserStruct();
-				temp.username = 123;
-				let user = new User(temp);
-				await user.validate();
-			} catch (error) {
-				expect(error.errors[0].message).to.equal('Username must be a string.');
 			}
 		});
 		it('should fail if too short', async () => {
@@ -61,7 +61,7 @@ describe('user', () => {
 				let temp = getUserStruct();
 				temp.username = 'lo';
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Username must have 3-18 characters.');
 			}
@@ -71,7 +71,7 @@ describe('user', () => {
 				let temp = getUserStruct();
 				temp.username = 'areallylongusername';
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Username must have 3-18 characters.');
 			}
@@ -84,7 +84,7 @@ describe('user', () => {
 				let temp = getUserStruct();
 				temp.password = undefined;
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Password is required.');
 			}
@@ -97,7 +97,7 @@ describe('user', () => {
 				let temp = getUserStruct();
 				temp.admin = undefined;
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Admin is required.');
 			}
@@ -105,24 +105,11 @@ describe('user', () => {
 		it('should fail if not numeric', async () => {
 			try {
 				let temp = getUserStruct();
-				temp.admin = '123';
+				temp.admin = 'test';
 				let user = new User(temp);
-				await user.validate();
+				assert(!await user.validate());
 			} catch (error) {
 				expect(error.errors[0].message).to.equal('Admin must be numeric.');
-			}
-		});
-	});
-
-	describe('token', () => {
-		it('should fail if not presented', async () => {
-			try {
-				let temp = getUserStruct();
-				temp.token = undefined;
-				let user = new User(temp);
-				await user.validate();
-			} catch (error) {
-				expect(error.errors[0].message).to.equal('Token is required.');
 			}
 		});
 	});

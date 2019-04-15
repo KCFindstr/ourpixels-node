@@ -5,6 +5,15 @@ module.exports = sequelize.define('Users', {
 	id: {
 		field: 'UserId',
 		type: Sequelize.INTEGER,
+		allowNull: false,
+		validate: {
+			notNull: {
+				msg: 'Id is required.'
+			},
+			isNumeric: {
+				msg: 'Id must be numeric.'
+			}
+		},
 		primaryKey: true
 	},
 	username: {
@@ -33,7 +42,16 @@ module.exports = sequelize.define('Users', {
 	},
 	admin: {
 		field: 'Admin',
-		type: Sequelize.INTEGER
+		type: Sequelize.INTEGER,
+		allowNull: false,
+		validate: {
+			notNull: {
+				msg: 'Admin is required.'
+			},
+			isNumeric: {
+				msg: 'Admin must be numeric.'
+			}
+		}
 	},
 	createdAt: {
 		type: Sequelize.DATE,
