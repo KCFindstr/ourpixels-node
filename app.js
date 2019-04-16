@@ -1,12 +1,17 @@
 require('dotenv').config();
 
+const WebSocket = require('ws');
 const express = require('express');
 const bodyParser = require('body-parser');
+const http = require('http');
 const app = express();
+const httpServer = http.createServer(app);
+const wss = new WebSocket.Server({ server: httpServer });
+httpServer.listen(process.env.PORT || 8080);
+
 const User = require('./models/user');
 const Image = require('./models/imagedata');
 const Access = require('./models/access');
-const WebSocket = require('ws');
 const Decoder = require('./image.js');
 
 User.hasMany(Image, { foreignKey: 'CreatorId' });
@@ -192,7 +197,6 @@ app.post('/logout', (req, res) => {
 });
 
 // websocket
-let wss = new WebSocket.Server({port: process.env.PORT || 8081 });
 let roomList = {};
 
 function wssLogin(ws, obj) {
@@ -386,6 +390,3 @@ setInterval(() => {
 		});
 	}
 }, 1000);
-
-// start app
-app.listen(process.env.PORT || 8080);

@@ -3,7 +3,7 @@ const { expect, assert } = require('chai');
 const WebSocket = require('ws');
 const frisby = require('frisby');
 
-const url = 'ws://localhost:8081';
+const url = 'ws://localhost:8080';
 const frisbyurl = 'http://localhost:8080';
 
 let token = '';
