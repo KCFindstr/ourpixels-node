@@ -244,11 +244,11 @@ describe('websocket', () => {
 				let timer = setInterval(() => {
 					if (success) {
 						clearInterval(timer);
-						client.close();
 						resolve();
 					}
 				}, 10);
 			});
+			client.close();
 			done();
 		});
 	})
@@ -273,7 +273,6 @@ describe('websocket', () => {
 				let timer = setInterval(() => {
 					if (client.lastSave != prev) {
 						clearInterval(timer);
-						client.close();
 						resolve();
 					}
 				}, 10);
