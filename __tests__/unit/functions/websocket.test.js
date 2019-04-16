@@ -261,6 +261,7 @@ describe('websocket', () => {
 				type: 'error',
 				message: 'No room found.'
 			});
+			client.close();
 			done();
 		});
 		it('should succeed if entered room', async (done) => {
@@ -277,6 +278,7 @@ describe('websocket', () => {
 					}
 				}, 10);
 			});
+			client.close();
 			done();
 		});
 	})
