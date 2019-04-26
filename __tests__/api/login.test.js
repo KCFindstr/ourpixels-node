@@ -34,7 +34,7 @@ it('login without username should return a 422', () => {
 	});
 });
 
-it('login with wrong credentials should return a 400', () => {
+it('login with wrong credentials should return a 422', () => {
 	return frisby
 	.post(url + '/login/', {
 		username: 'test',
