@@ -140,7 +140,7 @@ app.post('/login', (req, res) => {
 	})
 	.then((user) => {
 		if (!user) {
-			res.status(400).json({
+			res.status(422).json({
 				errors: ['Authentication failed.']
 			});
 		} else {

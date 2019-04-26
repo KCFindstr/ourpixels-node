@@ -40,7 +40,7 @@ it('login with wrong credentials should return a 400', () => {
 		username: 'test',
 		password: 'root'
 	})
-	.expect('status', 400)
+	.expect('status', 422)
 	.expect('json', {
 		errors: ['Authentication failed.']
 	});
